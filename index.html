@@ -1287,7 +1287,7 @@
     </div>
     <div class="header-text">
       <div class="header-brand">La Dama · Lavandería</div>
-      <div class="header-greet">Hola, <em>María</em></div>
+      <div class="header-greet">Hola, <em id="greetName">María</em></div>
     </div>
   </header>
 
@@ -1437,6 +1437,17 @@
     <p class="modal-subtitle">Personaliza tarifas, horario y festivos.</p>
 
     <div class="settings-section">
+      <div class="settings-section-title">Tu nombre</div>
+      <div class="field">
+        <label class="field-label">Cómo te saluda la app</label>
+        <div class="field-input-wrap">
+          <input type="text" id="userNameInput" maxlength="40" placeholder="María" autocomplete="off" />
+        </div>
+        <div class="field-help">Aparecerá en el saludo de bienvenida y en los resúmenes.</div>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <div class="settings-section-title">Tarifas</div>
       <div class="field">
         <label class="field-label">Precio hora normal</label>
@@ -1525,7 +1536,7 @@
     <button class="btn-ghost" id="resetAllBtn" style="color: #B83A3A;">Borrar todos los datos</button>
 
     <div style="text-align: center; padding-top: 14px; font-size: 11px; color: var(--ink-mute); letter-spacing: 0.5px;">
-      Mis Horas · v4.1 · La Dama Lavandería
+      Mis Horas · v4.2 · La Dama Lavandería
     </div>
   </div>
 </div>
@@ -1615,6 +1626,7 @@ const storage = {
 
 // ── DEFAULT CONFIG ────────────────────────────────────────────
 const DEFAULT_CONFIG = {
+  userName: 'María',
   priceNormal: 10,
   priceExtra: 15,
   priceSunHoliday: 18,
@@ -1633,6 +1645,7 @@ function loadConfig() {
   try {
     const c = JSON.parse(raw);
     return {
+      userName: (typeof c.userName === 'string' && c.userName.trim()) ? c.userName.trim() : DEFAULT_CONFIG.userName,
       priceNormal: c.priceNormal ?? DEFAULT_CONFIG.priceNormal,
       priceExtra: c.priceExtra ?? DEFAULT_CONFIG.priceExtra,
       priceSunHoliday: c.priceSunHoliday ?? DEFAULT_CONFIG.priceSunHoliday,
@@ -1867,6 +1880,8 @@ function fmtMoney(m) {
 }
 
 function render() {
+  // Saludo del header
+  document.getElementById('greetName').textContent = config.userName;
   // Header week range
   document.getElementById('weekRange').textContent = formatRange(currentMonday);
   const today = new Date(); today.setHours(0,0,0,0);
@@ -1904,7 +1919,7 @@ function render() {
       <div class="vacation-banner">
         <span class="vacation-banner-icon">🏖️</span>
         <div class="vacation-banner-title">Semana de <em>vacaciones</em></div>
-        <div class="vacation-banner-sub">Disfruta y descansa, María. No se cuentan horas esta semana.</div>
+        <div class="vacation-banner-sub">Disfruta y descansa, ${escapeHtml(config.userName)}. No se cuentan horas esta semana.</div>
         <button id="unmarkVacationBtn">Quitar vacaciones</button>
       </div>
     `;
@@ -2351,6 +2366,7 @@ document.getElementById('cancelDayBtn').addEventListener('click', closeDayModal)
 
 // ── SETTINGS MODAL ────────────────────────────────────────────
 function openSettings() {
+  document.getElementById('userNameInput').value = config.userName;
   document.getElementById('priceNormal').value = config.priceNormal;
   document.getElementById('priceExtra').value = config.priceExtra;
   document.getElementById('priceSunHoliday').value = config.priceSunHoliday;
@@ -2441,6 +2457,9 @@ function renderVacationsList() {
 }
 
 document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+  const nameRaw = document.getElementById('userNameInput').value || '';
+  const nameClean = nameRaw.trim().slice(0, 40);
+  config.userName = nameClean || 'María'; // fallback si lo dejan vacío
   const pn = parseFloat(document.getElementById('priceNormal').value);
   const pe = parseFloat(document.getElementById('priceExtra').value);
   const ps = parseFloat(document.getElementById('priceSunHoliday').value);
@@ -2674,7 +2693,7 @@ async function generateMonthImage(monthKey) {
   ctx.fillText('LA DAMA · LAVANDERÍA', 230, 120);
   ctx.fillStyle = '#2A1530';
   ctx.font = '500 38px Fraunces';
-  ctx.fillText('Resumen mensual de María', 230, 175);
+  ctx.fillText('Resumen mensual de ' + config.userName, 230, 175);
 
   // Big month label
   ctx.fillStyle = '#6B2C7B';
